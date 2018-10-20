@@ -4,21 +4,21 @@
 
 using namespace std;
 
-int* Ñreation_of_the_matrix(int row, int column)
+int* Creation_of_the_matrix(int row, int column)
 {
 	int *matrix;
 		matrix = new int[row*column];
 	return matrix;
 }
 
-int* Ñreation_of_the_vector(int rows)
+int* Creation_of_the_vector(int rows)
 {
 	int *vector;
 	vector = new int[rows];
 	return vector;
 }
 
-void Filling_of_the_matrix(int* matrix, int row, int column) //rand
+void Filling_of_the_matrix(int* matrix, int row, int column) 
 {
 	for (int i = 0; i < row; i++)
 		for (int j = 0; j < column; j++)
@@ -44,7 +44,7 @@ void Show_the_matrix(int* matrix, int row, int column)
 int main(int argc, char **argv) 
 {
 	int rows, columns;
-	int rank = -1, size = -1;
+	int rank, size;
 	int *matrix = NULL, *vector = NULL, *resultPar = NULL, *mas = NULL;
 	double endSeq = 0;
 	double startSeq = 0;
@@ -77,8 +77,8 @@ int main(int argc, char **argv)
 		}
 		cout << endl;
 
-		matrix = Ñreation_of_the_matrix(rows, columns);
-		vector = Ñreation_of_the_vector(rows);
+		matrix = Creation_of_the_matrix(rows, columns);
+		vector = Creation_of_the_vector(rows);
 		resultPar = new int[rows];
 		for (int i = 0; i < rows; i++)
 			resultPar[i] = INT_MIN;
@@ -156,8 +156,8 @@ int main(int argc, char **argv)
 		MPI_Recv(&columns, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &Status);
 		MPI_Recv(&rows, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &Status);
 
-		matrix = Ñreation_of_the_matrix(rows, columns);
-		vector = Ñreation_of_the_vector(rows);
+		matrix = Creation_of_the_matrix(rows, columns);
+		vector = Creation_of_the_vector(rows);
 
 		MPI_Recv(matrix, columns*rows, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &Status);
 
