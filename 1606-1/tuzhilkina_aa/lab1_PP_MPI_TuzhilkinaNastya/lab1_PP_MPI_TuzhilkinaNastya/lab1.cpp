@@ -7,7 +7,7 @@ using namespace std;
 int* Creation_of_the_matrix(int row, int column)
 {
 	int *matrix;
-		matrix = new int[row*column];
+	matrix = new int[row*column];
 	return matrix;
 }
 
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
 		if (rows <= 20 && columns <= 20)
 			Show_the_matrix(matrix, rows, columns);
 
-		/*Последовательный алгоритм*/
+		/*Sequential algorithm*/
 		startSeq = MPI_Wtime();
 
 		cout << endl << "  ---SEQUENCE VERSION---  " << endl;
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
 			cout << endl << " Maximum value in row " << i + 1 << " is " << vector[i] << " ";
 		cout << endl;
 
-		/*Паралелльный алгоритм*/
+		/*Parallel algorithm*/
 		startPar = MPI_Wtime();
 
 		cout << endl << "  ---PARALLEL VERSION---  " << endl;
@@ -140,7 +140,7 @@ int main(int argc, char **argv)
 			cout << endl << " Maximum value in row " << i + 1 << " is " << resultPar[i] << " ";
 		cout << endl;
 
-		// Сравнение времени работы алгоритмов
+		// Comparison of algorithm operation time
 		if (timePar <= timeSeq)
 			cout << endl << "Parallel version faster, then sequence" << endl;
 		else
