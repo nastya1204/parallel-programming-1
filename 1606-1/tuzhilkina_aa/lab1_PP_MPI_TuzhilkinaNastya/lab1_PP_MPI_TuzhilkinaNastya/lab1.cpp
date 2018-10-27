@@ -4,39 +4,35 @@
 
 using namespace std;
 
-int* Creation_of_the_matrix(int row, int column)
+double* Creation_of_the_matrix(int row, int column)
 {
-	int *matrix;
-	matrix = new int[row*column];
+	double *matrix;
+		matrix = new double[row*column];
 	return matrix;
 }
 
-int* Creation_of_the_vector(int rows)
+double* Creation_of_the_vector(int rows)
 {
-	int *vector;
-	vector = new int[rows];
+	double *vector;
+	vector = new double[rows];
 	return vector;
 }
 
-void Filling_of_the_matrix(int* matrix, int row, int column) 
+void Filling_of_the_matrix(double* matrix, int row, int column) 
 {
 	for (int i = 0; i < row; i++)
 		for (int j = 0; j < column; j++)
 			matrix[i * row + j] = rand() % 500;
 }
 
-void Show_the_matrix(int* matrix, int row, int column)
+void Show_the_matrix(double* matrix, int row, int column)
 {
-	cout << "Matrix:" << endl;
-	if (row <= 20 && column <= 20) 
-	{
 		for (int i = 0; i < row; i++) 
 		{
 			for (int j = 0; j < column; j++)
 				cout << matrix[i * row + j] << " ";
 			cout << endl;
 		}
-	}
 }
 
 
@@ -45,7 +41,7 @@ int main(int argc, char **argv)
 {
 	int rows, columns;
 	int rank, size;
-	int *matrix = NULL, *vector = NULL, *resultPar = NULL, *mas = NULL;
+	double *matrix = NULL, *vector = NULL, *resultPar = NULL;
 	double endSeq = 0;
 	double startSeq = 0;
 	double endPar = 0;
@@ -58,15 +54,15 @@ int main(int argc, char **argv)
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-	if (rank == 0) 
+	if (rank == 0)
 	{
 		cout << "Enter the number of rows=";
 		cin >> rows;
-			while (rows == 0)
-			{
-				cout << "The number of rows cannot be 0. Enter the number of rows=";
-				cin >> rows;
-			}
+		while (rows == 0)
+		{
+			cout << "The number of rows cannot be 0. Enter the number of rows=";
+			cin >> rows;
+		}
 
 		cout << "Enter the number of columns=";
 		cin >> columns;
@@ -79,26 +75,29 @@ int main(int argc, char **argv)
 
 		matrix = Creation_of_the_matrix(rows, columns);
 		vector = Creation_of_the_vector(rows);
-		resultPar = new int[rows];
-		for (int i = 0; i < rows; i++)
-			resultPar[i] = INT_MIN;
+		resultPar = Creation_of_the_vector(rows);
 
 		Filling_of_the_matrix(matrix, rows, columns);
 
-		if (rows <= 20 && columns <= 20)
+		if (rows <= 10 && columns <= 10)
+		{
+			cout << "Matrix: " << endl;
 			Show_the_matrix(matrix, rows, columns);
+		}
+		else
+			cout << "The matrix size is too large. " << endl;
 
-		/*Sequential algorithm*/
+		/*Последовательный алгоритм*/
 		startSeq = MPI_Wtime();
 
 		cout << endl << "  ---SEQUENCE VERSION---  " << endl;
 
-		for (int i = 0; i < rows; i++) {
-			vector[i] = INT_MIN;
+		for (int i = 0; i < rows; i++) 
+		{
 			for (int j = 0; j < columns; j++)
 			{
-				if (matrix[i * columns + j] > vector[i])
-					vector[i] = matrix[i * columns + j];
+				if (matrix[i * rows + j] > vector[i])
+					vector[i] = matrix[i * rows + j];
 			}
 		}
 
@@ -106,20 +105,28 @@ int main(int argc, char **argv)
 		timeSeq = (endSeq - startSeq) * 1000;
 		cout << "Time of sequence version: " << timeSeq << " ms" << endl;
 
-		cout << "Result: ";
-		for (int i = 0; i < rows; i++)
-			cout << endl << " Maximum value in row " << i + 1 << " is " << vector[i] << " ";
-		cout << endl;
+		if (rows <= 10 && columns <= 10) 
+		{
+			cout << "Result: ";
+			for (int i = 0; i < rows; i++)
+			{
+				cout << endl << " Maximum value in row " << i + 1 << " is " << vector[i] << " ";
+			}
+			cout << endl;
+		}
+		
 
-		/*Parallel algorithm*/
+		/*Параллельный алгоритм*/
 		startPar = MPI_Wtime();
 
 		cout << endl << "  ---PARALLEL VERSION---  " << endl;
 
-		for (int i = 1; i < size; i++) {
-			MPI_Send(&columns, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-			MPI_Send(&rows, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-			MPI_Send(matrix, columns*rows, MPI_INT, i, 0, MPI_COMM_WORLD);
+		MPI_Bcast(&columns, 1, MPI_INT, 0, MPI_COMM_WORLD);
+		MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
+		
+		for (int i = 1; i < size; i++)
+		{
+			MPI_Send(matrix, columns*rows, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
 		}
 
 		for (int i = 1; i < size; i++) {
@@ -135,12 +142,17 @@ int main(int argc, char **argv)
 		timePar = (endPar - startPar);
 		cout << "Time of parallel version: " << timePar << " ms" << endl;
 
-		cout << "Result: ";
-		for (int i = 0; i < rows; i++)
-			cout << endl << " Maximum value in row " << i + 1 << " is " << resultPar[i] << " ";
-		cout << endl;
+		if (rows <= 10 && columns <= 10)
+		{
+			cout << "Result: ";
+			for (int i = 0; i < rows; i++)
+			{
+				cout << endl << " Maximum value in row " << i + 1 << " is " << resultPar[i] << " ";
+			}
+			cout << endl;
+		}
 
-		// Comparison of algorithm operation time
+		// Сравнение времени работы алгоритмов
 		if (timePar <= timeSeq)
 			cout << endl << "Parallel version faster, then sequence" << endl;
 		else
@@ -149,30 +161,31 @@ int main(int argc, char **argv)
 		delete matrix;
 		delete vector;
 		delete resultPar;
+
+		system("pause");
 	}
 	
 	else 
 	{
-		MPI_Recv(&columns, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &Status);
-		MPI_Recv(&rows, 1, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &Status);
+		MPI_Bcast(&columns, 1, MPI_INT, 0, MPI_COMM_WORLD);
+		MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 		matrix = Creation_of_the_matrix(rows, columns);
 		vector = Creation_of_the_vector(rows);
 
-		MPI_Recv(matrix, columns*rows, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &Status);
+		MPI_Recv(matrix, columns*rows, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &Status);
 
 		for (int i = 0; i < rows; i++) 
 		{
-			vector[i] = INT_MIN;
 			for (int j = (rank - 1); j < columns; j += (size - 1))
-				if (matrix[i * columns + j] > vector[i])
-					vector[i] = matrix[i * columns + j];
+				if (matrix[i * rows + j] > vector[i])
+					vector[i] = matrix[i * rows + j];
 		}
 
 		MPI_Send(vector, rows, MPI_INT, 0, 0, MPI_COMM_WORLD);
 	}
 
 	MPI_Finalize();
-	system("pause");
+	
 	return 0;
 }
