@@ -1,5 +1,6 @@
 #include <mpi.h>
 #include <iostream>
+#include "time.h"
 #include <cstdlib>
 
 using namespace std;
@@ -92,7 +93,7 @@ int main(int argc, char **argv)
 
 		cout << endl << "  ---SEQUENCE VERSION---  " << endl;
 
-		for (int i = 0; i < rows; i++) 
+		for (int i = 0; i < rows; i++)
 		{
 			for (int j = 0; j < columns; j++)
 			{
@@ -102,10 +103,10 @@ int main(int argc, char **argv)
 		}
 
 		endSeq = MPI_Wtime();
-		timeSeq = (endSeq - startSeq) * 1000;
+		timeSeq = (endSeq - startSeq);
 		cout << "Time of sequence version: " << timeSeq << " ms" << endl;
 
-		if (rows <= 10 && columns <= 10) 
+		if (rows <= 10 && columns <= 10)
 		{
 			cout << "Result: ";
 			for (int i = 0; i < rows; i++)
@@ -114,23 +115,23 @@ int main(int argc, char **argv)
 			}
 			cout << endl;
 		}
-		
-
 		/*ֿאנאככוכüםûי אכדמנטעל*/
 		startPar = MPI_Wtime();
 
 		cout << endl << "  ---PARALLEL VERSION---  " << endl;
+	}
 
-		MPI_Bcast(&columns, 1, MPI_INT, 0, MPI_COMM_WORLD);
-		MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
-		
-		for (int i = 1; i < size; i++)
+	MPI_Bcast(&columns, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+	if(rank == 0)
+	{
+		int partSize = rows / size;
+		int *vec = new int[columns * partSize];
+		MPI_Scatter(matrix, columns * partSize, MPI_DOUBLE, vec, columns*partSize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+ 		for (int i = 1; i < size; i++) 
 		{
-			MPI_Send(matrix, columns*rows, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
-		}
-
-		for (int i = 1; i < size; i++) {
-			MPI_Recv(vector, rows, MPI_INT, i, MPI_ANY_TAG, MPI_COMM_WORLD, &Status);
 			for (int j = 0; j < rows; j++) {
 				if (vector[j] > resultPar[j])
 					resultPar[j] = vector[j];
@@ -161,31 +162,29 @@ int main(int argc, char **argv)
 		delete matrix;
 		delete vector;
 		delete resultPar;
-
-		system("pause");
 	}
 	
-	else 
+	else
 	{
+		int partSize = rows / size;
+
 		MPI_Bcast(&columns, 1, MPI_INT, 0, MPI_COMM_WORLD);
 		MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
+		
 		matrix = Creation_of_the_matrix(rows, columns);
 		vector = Creation_of_the_vector(rows);
+		
+		MPI_Gather(vector, partSize, MPI_INT, resultPar, partSize, MPI_INT, 0, MPI_COMM_WORLD);
 
-		MPI_Recv(matrix, columns*rows, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &Status);
-
-		for (int i = 0; i < rows; i++) 
+		for (int i = 0; i < rows; i++)
 		{
 			for (int j = (rank - 1); j < columns; j += (size - 1))
 				if (matrix[i * rows + j] > vector[i])
 					vector[i] = matrix[i * rows + j];
 		}
-
-		MPI_Send(vector, rows, MPI_INT, 0, 0, MPI_COMM_WORLD);
 	}
 
 	MPI_Finalize();
-	
+
 	return 0;
 }
